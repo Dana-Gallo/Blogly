@@ -2,7 +2,7 @@
 
 from flask import Flask, render_template, request, redirect
 from flask_debugtoolbar import DebugToolbarExtension
-from models import db, connect_db, User, Post
+from models import db, connect_db, User, Post, Tag
 from datetime import datetime
 
 app = Flask(__name__)
@@ -151,3 +151,52 @@ def delete_post(post_id):
     db.session.commit()
 
     return redirect(f'/users/{user_id}')
+
+    @app.route('/tags')
+def list_tags():
+    """Show all tags."""
+    tags = Tag.query.all()
+    return render_template('tags.html', tags=tags)
+
+
+@app.route('/tags/new')
+def new_tag_form():
+    """Show form to create a new tag."""
+    return render_template('new_tag.html')
+
+
+@app.route('/tags/new', methods=["POST"])
+def create_tag():
+    """Handle tag creation."""
+    name = request.form["name"]
+
+    new_tag = Tag(name=name)
+
+    db.session.add(new_tag)
+    db.session.commit()
+
+    return redirect('/tags')
+
+    @app.route('/tags/<int:tag_id>/edit')
+def edit_tag_form(tag_id):
+    """Show form to edit a tag."""
+    tag = Tag.query.get_or_404(tag_id)
+    return render_template('edit_tag.html', tag=tag)
+
+
+@app.route('/tags/<int:tag_id>/edit', methods=["POST"])
+def update_tag(tag_id):
+    """Handle edit form submission for tag."""
+    tag = Tag.query.get_or_404(tag_id)
+
+    tag.name = request.form["name"]
+
+    db.session.commit()
+
+    return redirect('/tags')
+
+    @app.route('/tags/<int:tag_id>')
+def show_tag(tag_id):
+    """Show a tag and its posts."""
+    tag = Tag.query.get_or_404(tag_id)
+    return render_template('tag_detail.html', tag=tag)
